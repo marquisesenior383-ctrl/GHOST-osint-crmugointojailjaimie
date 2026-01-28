@@ -389,19 +389,32 @@ const ObsidianGraph = ({
       });
     }
 
-    // Center on selected person
+    // Center on selected person or initialize centered view
     if (selectedPersonId) {
-      const selectedNodeData = nodes.find(n => n.id === selectedPersonId.toString());
-      if (selectedNodeData) {
+      // Wait for simulation to stabilize before centering on selected node
+      setTimeout(() => {
+        const selectedNodeData = nodes.find(n => n.id === selectedPersonId.toString());
+        if (selectedNodeData && selectedNodeData.x && selectedNodeData.y) {
+          const transform = d3.zoomIdentity
+            .translate(width / 2, height / 2)
+            .scale(1.5)
+            .translate(-selectedNodeData.x, -selectedNodeData.y);
+
+          svg.transition()
+            .duration(750)
+            .call(zoom.transform, transform);
+        }
+      }, 500);
+    } else {
+      // Initialize with centered view for general graph
+      setTimeout(() => {
         const transform = d3.zoomIdentity
           .translate(width / 2, height / 2)
-          .scale(1.5)
-          .translate(-selectedNodeData.x, -selectedNodeData.y);
+          .scale(1)
+          .translate(-width / 2, -height / 2);
 
-        svg.transition()
-          .duration(750)
-          .call(zoom.transform, transform);
-      }
+        svg.call(zoom.transform, transform);
+      }, 100);
     }
 
     // Store simulation reference

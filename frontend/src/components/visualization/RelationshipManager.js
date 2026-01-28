@@ -476,10 +476,10 @@ const RelationshipManager = ({
       <div className="bg-white border-b px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
           <Network className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-lg font-semibold text-gray-900">
             {personId ? 'Person Relationships' : 'Global Relationship Network'}
           </h3>
-          <span className="text-sm text-gray-500 dark:text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-gray-600">
             ({filteredPeople.length} entities: {filteredPeople.filter(e => !e.type || e.type !== 'business').length} people, {filteredPeople.filter(e => e.type === 'business').length} businesses)
           </span>
         </div>
@@ -490,7 +490,7 @@ const RelationshipManager = ({
             <button
               onClick={() => setViewMode('obsidian')}
               className={`px-2 py-1 text-xs rounded flex items-center space-x-1 transition ${
-                viewMode === 'obsidian' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                viewMode === 'obsidian' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-700 hover:text-gray-900'
               }`}
               title="Obsidian View (Force-Directed)"
             >
@@ -500,7 +500,7 @@ const RelationshipManager = ({
             <button
               onClick={() => setViewMode('reactflow')}
               className={`px-2 py-1 text-xs rounded flex items-center space-x-1 transition ${
-                viewMode === 'reactflow' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                viewMode === 'reactflow' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-700 hover:text-gray-900'
               }`}
               title="Classic View (ReactFlow)"
             >
@@ -512,7 +512,7 @@ const RelationshipManager = ({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-1.5 text-sm rounded-md flex items-center space-x-2 ${
-              showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+              showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
             title="Toggle Filters"
           >
@@ -524,21 +524,21 @@ const RelationshipManager = ({
               </span>
             )}
           </button>
-          
+
           <button
             onClick={() => setDebugMode(!debugMode)}
             className={`px-3 py-1.5 text-sm rounded-md flex items-center space-x-2 ${
-              debugMode ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 hover:bg-gray-200'
+              debugMode ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
             title="Toggle Debug Info"
           >
             <Bug className="w-4 h-4" />
             <span className="hidden sm:inline">Debug</span>
           </button>
-          
+
           <button
             onClick={fetchPeople}
-            className="px-3 py-1.5 text-sm rounded-md flex items-center space-x-2 bg-gray-100 hover:bg-gray-200"
+            className="px-3 py-1.5 text-sm rounded-md flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700"
             title="Refresh Data"
           >
             <RefreshCw className="w-4 h-4" />
@@ -548,31 +548,31 @@ const RelationshipManager = ({
             <select
               value={layoutType}
               onChange={(e) => setLayoutType(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md"
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700"
             >
               <option value="hierarchical">Hierarchical</option>
               <option value="circular">Circular</option>
               <option value="grid">Grid</option>
             </select>
           )}
-          
+
           {!showInModal && (
             <button
               onClick={() => setFullScreen(!fullScreen)}
-              className="px-3 py-1.5 text-sm rounded-md bg-gray-100 hover:bg-gray-200"
+              className="px-3 py-1.5 text-sm rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
               title={fullScreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
               <Maximize2 className="w-4 h-4" />
             </button>
           )}
-          
+
           {(showInModal || fullScreen) && onClose && (
             <button
               onClick={() => {
                 setFullScreen(false);
                 if (showInModal || fullScreen) onClose();
               }}
-              className="px-3 py-1.5 text-sm rounded-md bg-gray-100 hover:bg-gray-200"
+              className="px-3 py-1.5 text-sm rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
             >
               Close
             </button>
