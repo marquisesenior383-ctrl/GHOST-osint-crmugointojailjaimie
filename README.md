@@ -32,12 +32,17 @@ A full-stack OSINT investigation management system built for serious intelligenc
 - **Map filters**: Filter by person, date range, or location type
 
 ### 📡 Wireless Network Intelligence (WiGLE Integration)
+- **Manual network entry**: Add wireless networks manually with comprehensive forms
 - **KML import**: Import WiGLE wardriving data
-- **Network tracking**: SSID, BSSID, encryption, signal strength
+- **Network tracking**: SSID, BSSID, encryption, signal strength, passwords
+- **WiFi 7 support**: Full support for WiFi 7 frequency bands (2.4GHz, 5GHz, 6GHz)
+- **Multi-entity associations**: Link networks to multiple people and businesses
 - **Person association**: Link wireless networks to investigations
-- **Map visualization**: Geographic network mapping with labels
+- **Map visualization**: Wireless networks appear on global map with WiFi icons
+- **Map toggle**: Show/hide wireless networks on map
 - **Advanced filtering**: Filter by signal strength, encryption, KML file source
 - **Location preview**: Interactive map in detail view
+- **Flexible validation**: Only SSID required, BSSID and location optional
 
 ### 🛠️ Tools & Resources Arsenal
 - **OSINT tool inventory**: Catalog of investigation tools
@@ -66,11 +71,13 @@ A full-stack OSINT investigation management system built for serious intelligenc
 - **Address and contact management**: Full business profiles
 
 ### 🌓 Modern UI/UX
-- **Glass morphism design**: Professional, translucent interface
-- **Dark mode**: Full dark mode support
+- **Solid backgrounds**: Professional, readable interface with proper contrast
+- **Dark mode**: Full dark mode support with optimized text readability
 - **Responsive layout**: Works on desktop and tablet
 - **Professional colorway**: Business-appropriate aesthetics
 - **Smooth animations**: Apple-inspired interactions
+- **Enhanced readability**: All text elements have proper contrast in both light and dark modes
+- **Centered visualizations**: Relationship graphs center properly on load
 
 ## 🚀 Quick Start (Docker)
 
@@ -185,12 +192,25 @@ GHOST-osint-crm/
 6. **Assign tasks** to track investigation progress
 
 ### Wireless Network Intelligence
+**Manual Entry:**
+1. Go to Wireless Networks section
+2. Click "Add Network" button
+3. Enter network details (SSID required, rest optional)
+4. Select associated people/businesses
+5. Save and view on map
+
+**KML Import:**
 1. Export KML from WiGLE app/website
 2. Go to Wireless Networks section
 3. Click "Import KML"
 4. Upload your KML file
 5. Networks appear on map and table
 6. Associate networks with people under investigation
+
+**Map View:**
+- Toggle wireless networks on/off in the global map
+- Click WiFi icons for network details
+- Filter networks by various criteria
 
 ### Entity Network Mapping
 1. Navigate to "Entity Network" section
@@ -368,6 +388,16 @@ Feedback, inputs, and suggestions are highly welcome! Please open an issue or re
 
 ## 📋 Recent Changes
 
+### Version 2.2.0 (January 2026)
+- 🛜 **Manual wireless network entry** - Add networks manually with comprehensive forms
+- 🗺️ **Wireless networks on map** - Networks appear on global map with WiFi icons
+- 📡 **WiFi 7 support** - Full support for WiFi 7 frequency bands
+- 🔗 **Multi-entity associations** - Associate networks with multiple people and businesses
+- 🎨 **Dark mode improvements** - Fixed text readability across all components
+- 📊 **Relationship graph enhancements** - Better centering and header readability
+- ✨ **UI refinements** - Solid backgrounds for improved readability
+- 🔧 **Flexible validation** - Only SSID required for network entry
+
 ### Version 2.1.0 (January 2026)
 - 🔒 **Critical security improvements** - Production environment validation
 - 🐛 **Fixed users table creation** - No more manual migrations needed
@@ -383,5 +413,5 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 Built with ❤️ for the OSINT community.
 
-**Version:** 2.1.0
-**Last Updated:** January 2026
+**Version:** 2.2.0
+**Last Updated:** January 28, 2026
