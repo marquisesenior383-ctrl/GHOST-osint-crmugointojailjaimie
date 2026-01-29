@@ -9,6 +9,8 @@ const ImportKML = ({ onClose, onImportComplete }) => {
   const [importResult, setImportResult] = useState(null);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef(null);
 
   // Handle drag events
@@ -34,7 +36,7 @@ const ImportKML = ({ onClose, onImportComplete }) => {
   };
 
   // Handle file selection
-  const handleFileSelect = (selectedFile) => {
+  const handleFileSelect = async (selectedFile) => {
     // Validate file type
     if (!selectedFile.name.toLowerCase().endsWith('.kml')) {
       setError('Please select a KML file (.kml)');
@@ -50,6 +52,91 @@ const ImportKML = ({ onClose, onImportComplete }) => {
     setFile(selectedFile);
     setError(null);
     setImportResult(null);
+
+    // Generate preview
+    await generatePreview(selectedFile);
+  };
+
+  // Generate preview from KML file
+  const generatePreview = async (kmlFile) => {
+    try {
+      const text = await kmlFile.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, 'text/xml');
+
+      // Check for parsing errors
+      const parseError = xmlDoc.querySelector('parsererror');
+      if (parseError) {
+        throw new Error('Invalid KML file format');
+      }
+
+      // Count placemarks (wireless networks)
+      const placemarks = xmlDoc.querySelectorAll('Placemark');
+      const networkCount = placemarks.length;
+
+      // Analyze network types and encryption
+      let wifiCount = 0;
+      let bluetoothCount = 0;
+      let cellCount = 0;
+      let encryptedCount = 0;
+      let openCount = 0;
+      const ssids = new Set();
+      const bssids = new Set();
+
+      placemarks.forEach(placemark => {
+        const name = placemark.querySelector('name')?.textContent || '';
+        const description = placemark.querySelector('description')?.textContent || '';
+        const styleUrl = placemark.querySelector('styleUrl')?.textContent || '';
+
+        ssids.add(name);
+
+        // Parse BSSID from description
+        const bssidMatch = description.match(/Network ID:\s*([A-Fa-f0-9:]+)/);
+        if (bssidMatch) {
+          bssids.add(bssidMatch[1]);
+        }
+
+        // Determine network type
+        if (styleUrl.includes('bluetooth')) {
+          bluetoothCount++;
+        } else if (styleUrl.includes('cell')) {
+          cellCount++;
+        } else {
+          wifiCount++;
+        }
+
+        // Check encryption
+        if (description.includes('Encryption:')) {
+          const encMatch = description.match(/Encryption:\s*(\w+)/);
+          if (encMatch) {
+            const encType = encMatch[1].toLowerCase();
+            if (encType === 'open' || encType === 'unknown') {
+              openCount++;
+            } else {
+              encryptedCount++;
+            }
+          }
+        }
+      });
+
+      setPreview({
+        fileName: kmlFile.name,
+        fileSize: formatFileSize(kmlFile.size),
+        totalNetworks: networkCount,
+        uniqueSSIDs: ssids.size,
+        uniqueBSSIDs: bssids.size,
+        wifiCount,
+        bluetoothCount,
+        cellCount,
+        encryptedCount,
+        openCount
+      });
+      setShowPreview(true);
+    } catch (err) {
+      console.error('Error generating preview:', err);
+      setError('Failed to parse KML file: ' + err.message);
+      setFile(null);
+    }
   };
 
   // Handle file input change
@@ -68,14 +155,15 @@ const ImportKML = ({ onClose, onImportComplete }) => {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  // Import KML file
-  const handleImport = async () => {
+  // Confirm and import KML file
+  const handleConfirmImport = async () => {
     if (!file) {
       setError('Please select a file first');
       return;
     }
 
     setImporting(true);
+    setShowPreview(false);
     setError(null);
 
     try {
@@ -92,6 +180,13 @@ const ImportKML = ({ onClose, onImportComplete }) => {
     } finally {
       setImporting(false);
     }
+  };
+
+  // Cancel preview
+  const handleCancelPreview = () => {
+    setShowPreview(false);
+    setPreview(null);
+    setFile(null);
   };
 
   // Reset and close
@@ -199,17 +294,16 @@ const ImportKML = ({ onClose, onImportComplete }) => {
               </div>
 
               {/* File Preview Info */}
-              {file && (
+              {file && !showPreview && (
                 <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-start space-x-3">
                     <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        Ready to import
+                        Analyzing file...
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        This will parse the KML file and import all wireless networks found.
-                        Duplicate networks will be updated if newer signal data is available.
+                        Generating preview of networks to import
                       </p>
                     </div>
                   </div>
@@ -325,29 +419,132 @@ const ImportKML = ({ onClose, onImportComplete }) => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleImport}
-              disabled={!file || importing}
-              className="px-6 py-2 text-sm font-medium text-white bg-gradient-primary
-                       rounded-lg-lg hover:shadow-glow-lg transition-all
-                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none
-                       flex items-center space-x-2"
-            >
-              {importing ? (
-                <>
-                  <Loader className="w-4 h-4 animate-spin" />
-                  <span>Importing...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4" />
-                  <span>Import Networks</span>
-                </>
-              )}
-            </button>
           </div>
         )}
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && preview && (
+        <div className="fixed inset-0 bg-black/70 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Preview Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  Import Preview
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                  Review networks before importing
+                </p>
+              </div>
+              <button
+                onClick={handleCancelPreview}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            {/* Preview Content */}
+            <div className="p-6 space-y-6">
+              {/* File Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    File Name
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{preview.fileName}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    File Size
+                  </label>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{preview.fileSize}</p>
+                </div>
+              </div>
+
+              {/* Network Statistics */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  Networks to Import
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Total Networks</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.totalNetworks}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Unique SSIDs</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.uniqueSSIDs}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Unique BSSIDs</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.uniqueBSSIDs}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">WiFi Networks</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.wifiCount}</span>
+                  </div>
+                  {preview.bluetoothCount > 0 && (
+                    <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Bluetooth</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.bluetoothCount}</span>
+                    </div>
+                  )}
+                  {preview.cellCount > 0 && (
+                    <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Cell Towers</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.cellCount}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Encrypted</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.encryptedCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Open Networks</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{preview.openCount}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-blue-900 dark:text-blue-200 font-medium">Note</p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                      Duplicate networks will be updated if newer signal data is available.
+                      Networks with the same BSSID, location, and scan date will be merged.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Footer */}
+            <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900/50">
+              <button
+                onClick={handleCancelPreview}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300
+                         hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmImport}
+                className="px-6 py-2 text-sm font-medium text-white bg-gradient-primary
+                         rounded-lg hover:shadow-glow-lg transition-all
+                         flex items-center space-x-2"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Confirm Import</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
