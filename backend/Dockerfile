@@ -13,6 +13,9 @@ RUN npm ci
 # Bundle app source
 COPY . .
 
+# Install su-exec for user switching in entrypoint
+RUN apk add --no-cache su-exec
+
 # Create public directory for uploads
 RUN mkdir -p public/uploads/logos
 
@@ -21,11 +24,15 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
     chown -R nodejs:nodejs /usr/src/app
 
-# Switch to non-root user
-USER nodejs
+# Copy and set up entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Your app binds to port 3001
 EXPOSE 3001
 
-# Define the command to run your app
-CMD [ "node", "server.js" ]
+# Use entrypoint to handle permissions before starting app
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Define the command to run your app (passed to entrypoint as arguments)
+CMD ["su-exec", "nodejs", "node", "server.js"]
