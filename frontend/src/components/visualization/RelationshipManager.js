@@ -47,8 +47,10 @@ const RelationshipManager = ({
       setError(null);
       
       console.log('=== RelationshipManager: Fetching people ===');
-      const response = await fetch(`${API_BASE_URL}/people`);
-      
+      const response = await fetch(`${API_BASE_URL}/people`, {
+        credentials: 'include'
+      });
+
       if (!response.ok) {
         throw new Error(`Failed to fetch people: ${response.status} ${response.statusText}`);
       }
@@ -200,6 +202,7 @@ const RelationshipManager = ({
       // Send update
       const response = await fetch(`${API_BASE_URL}/people/${sourceId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -254,6 +257,7 @@ const RelationshipManager = ({
 
       await fetch(`${API_BASE_URL}/people/${sourceId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
